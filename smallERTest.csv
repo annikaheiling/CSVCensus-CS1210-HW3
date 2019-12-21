@@ -1,0 +1,5 @@
+Country,Region,Gender,Ageyears,Handed,Height_cm
+USA,OK,Female,16,Right-Handed,169
+USA,NH,Male,18,Left-Handed,180
+MX,Peninsula,Female,18,Right-Handed,165
+USA,WI,Male,17,Right-Handed,2
