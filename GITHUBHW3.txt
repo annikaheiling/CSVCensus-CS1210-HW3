@@ -1,0 +1,207 @@
+# CS1210 HW3
+#
+# I certify that this file contains only my own work. I also certify
+# that I have not shared the contents of this file with anyone in 
+# any form. 
+
+######################################################################
+# You will need these modules.
+import sys
+import csv
+import matplotlib.pyplot as plt
+
+######################################################################
+#Spec 1:
+# Input: filename (comma-separated value format)
+# Output: list of dictionaries, with each dictionary representing a line from
+#         the original data file.
+# Note: all values should be converted to int or float, as appropriate,
+#       else left as strings.
+# Hint: Use the Python CSV DictReader object:
+#       https://docs.python.org/3.6/library/csv.html
+#Country, Region, Gender, Ageyears, Handed, Height_cm
+#USA, OK, Female, 16, Right-Handed, 169
+#USA, GA, Female, 18, Left-Handed, 165.1
+#USA, NJ, , , ,
+#USA, CA, Female, 17, Left-Handed, 55
+#TURNS INTO:
+#[ OrderedDict([('Country', 'USA'), ('Region', 'OK'), ('Gender', 'Female'),
+#('Ageyears', '16'), ('Handed', 'Right-Handed'), ('Height_cm', '169')]),
+#OrderedDict([( ... ...
+#getData("data.csv")
+def getData(file='test.csv'):
+    '''Takes a CSV file and outputs a list of dictionaries: each dictionary
+    being one row (survey participant) from the file, each key representing
+    a category (like Country), and each value representing their answer.'''
+    
+    censusList = []
+    with open(file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        #print(reader)#
+        for row in reader:
+            #for each ordereddict#
+            for key, value in row.items():
+                #goes through each key and value in an entry to make all possible type conversions
+                #print(key, value)#
+                if "." in value:
+                    try:
+                        row[key] = float(value)
+                    except:
+                        row[key] = value
+                    #converts the value from string to a float if possible
+                    #print("make float")#
+                    #row[key]=float(value)
+                elif value.isnumeric() == True:
+                    #converts the value from string to integer if possible
+                    #print("elif int")#
+                    try:
+                        row[key] = int(value)
+                    except:
+                        row[key] = value
+                    #row[key]=int(value)
+            #print(row)#
+            censusList.append(row)
+            #adds each orderedDict (record) to the list of records
+        return(censusList)
+
+######################################################################
+#Spec 2:
+# Input: list of dictionaries such as that produced by getData() and
+#        a selector dictionary consisting of field:[values], where
+#        field is a data element in the original file and [values] is
+#        a list of accepted values (see sample selector in signature,
+#        which matches all records in the test dataset).
+# Ouptut: list of dictionaries with values matching the specified
+#         selector.
+#
+# If the optional missing parameter is True, a missing value in a
+# record is considered a matching value for a corresponding selector.
+#select(getData())
+def select(D, selector={'Country':['USA']}, missing=False):
+#def select(D, selector={'Handed':['Right-Handed', "Ambidextrous"], "Ageyears":[17]}, missing=False):###replace w above def when done   
+    '''Takes a list of dictionaries and a selector dictionary. Eliminates all
+    dictionaries which do not comply with the value list of each field in the
+    selector. Returns a list of only the dictionaries that comply with all selector criteria.'''
+    
+    neededMatches = len(selector) 
+    #number of things each record has to match to stay
+    #print(fieldMatches)#
+    
+    selectedDict = []
+    #initialize new dictionary to put selected records into
+    
+    for personEntry in D:
+        personMatches = 0
+        for field, value in selector.items():
+            if personEntry[field] in selector[field]:
+                personMatches +=1
+            #the person matches 1 field if this is true
+            elif missing == True and personEntry[field]=="":
+                personMatches+=1
+                #if the parameter is empty and missing == True, the person will 
+                #also be considered a match for this 1 field
+        if personMatches == neededMatches:
+            #if the person fits all of the fields, add them to the selected dict
+            selectedDict.append(personEntry)
+    #print(str(len(selectedDict))+" entries long")#
+    return(selectedDict)
+    
+######################################################################
+#Spec 3:
+# Input: list of dictionaries such as that produced by getData()
+#        or select()
+# Output: a distribution (also a dictionary) that can be used to
+#         build a histogram.
+#
+# Each key in the result corresponds to a key in the input (and, thus,
+# a field in the original data set), and the values in the results are
+# themselves dictionaries of key values and the number of occurrences
+# of those values.
+#{"Country":{"USA":19}, "Region":{"OK":3, "IL": 5, "TX": 1}...} #something along these lines?
+# In addition, one additional special key:value pair 'SampleSize' is
+# added to the resulting dictionary containing the total number of
+# records in the input sample.
+#describe(getData())
+# describe(getData("smallTest.csv"))
+def describe(D):
+    '''Takes a list of dictionaries (each one being a record of one student
+    from the census) and returns a dictionary that has a distribution of the values'''
+    
+    H = {} 
+    #initialize distribution dictionary that can be used to make bar graph/histogram
+    L = [i for i in D[0].keys()]
+    #creates a list of category names (ex. "Country", "Region")
+    for item in L:
+        #creates an empty dictionary for each category, where each different response
+        #and that response's frequency can be recorded
+        H[item]={}
+        
+    for person in D:
+        #goes over each orderedDict in the data (each representing 1 record's responses)
+        #print(person)#
+        for item in person:
+            if person[item] not in H[item]:
+        #if the item isn't already in H, puts the item (ex. "USA") into the 
+        #distribution dictionary with an initial value of 1 
+        #(for the 1 time it has been seen in the responses).
+                #print("personitem IS NOT IN Hitem")#
+                H[item][person[item]]=1
+            else:
+        #if the item was already in H, adds 1 to the value so that it is a count 
+        #of how many times that item shows up in the data.
+                #print("personitem IS ALREADY IN Hitem")#
+                H[item][person[item]]+=1
+
+    H["SampleSize"] = len(D) 
+    #adds one additional key:value pair which gives the number of records in the sample
+    return(H)
+
+######################################################################
+#Spec 4:
+# Input: a distribution such as that produced by describe() and the
+#        name of a specific field from that distribution
+# Output: a histogram.
+#eric says to actually do a bar graph instead 
+# plot(describe(getData("smallERTest.csv")), "Country")
+# plot(describe(getData("data.csv")), "Gender")
+def plot(H, field):
+    '''Takes a distribution (such as from describe()) and the name of 1 field
+    from the distribution. Outputs a histogram of that field's data calculated
+    with data from the distribution.'''
+    
+    categories = list(H[field].keys())
+    #makes a list of categories (ex. "IL", "IA", "CA" if field is "Region")
+    #print(categories)#
+
+    numbers = []
+    for category in categories:
+        #puts the number of entries that responded as a specific category 
+        #(ex. that 12 people responded "USA" if the field is "Country") into a list
+        numbers.append((H[field][category]))
+    
+    percents = []
+    for number in numbers: 
+        #divides each number by the total to get each number as a %
+        percents.append(number/sum(numbers))
+        #print("numbers % conversion:")#
+        #print(percents)#
+        
+    for category in categories:
+        if category == "":
+            categories[categories.index(category)] = "Unknown"
+            #changes any response left empty from an empty string into "Unknown"
+        if type(category)==int or type(category)==float:
+            categories[categories.index(category)] = str(category)
+            #changes the category names into strings so they'll display as labels on x-axis
+
+    plt.bar(categories, percents)
+    #puts the categories on the x axis, and the percent of the sample in that category on the y axis
+    plt.xlabel("Value")
+    plt.ylabel("% of Sample")
+    plt.title("Sample Distribution for {}: Region [N={}]".format(field, str(sum(numbers))))
+    #other labels for axes and one for overall chart
+    plt.xticks(categories)
+    plt.tight_layout() #maybe not doing anything#
+    plt.show()
+
+    ###spacing issues when lots of categories- ?
